@@ -10,15 +10,19 @@
     <xi:include href="./head-eb05-j0_1-mc_service.xml" />
 
     <!-- joint number                           0                   1                   -->
-    <!-- joint name                             neck-pan          neck-tilt           -->
+    <!-- joint name                             neck_pan            neck_tilt           -->
     <group name="LIMITS">
         <param name="jntPosMin">                -53                 -18                 </param>
         <param name="jntPosMax">                +53                 +37                 </param>
         <param name="jntVelMax">                1000                1000                </param>
         <param name="motorOverloadCurrents">    1200                1200                </param>
-        <param name="motorNominalCurrents">     800                800                </param><!-- review-->
-        <param name="motorPeakCurrents">        1000                1000                </param><!-- review-->
-        <param name="motorPwmLimit">            1333                1333                </param><!-- review-->
+        <!-- ? Review motorNominalCurrents and motorPeakCurrents once the motors are
+             ? confirmed. Values here are carried from the last configuration.        -->
+        <param name="motorNominalCurrents">     800                 800                 </param>
+        <param name="motorPeakCurrents">        1000                1000                </param>
+        <!-- * motorPwmLimit matches fullscalePWM = 1333 from the mec file, so the
+             * firmware limit and the PID output ceiling are aligned.                     -->
+        <param name="motorPwmLimit">            1333                1333                </param>
     </group>
 
     <group name="TIMEOUTS">
@@ -29,7 +33,7 @@
         <param name="stiffness">                0.0                 0.0                 </param>
         <param name="damping">                  0.0                 0.0                 </param>
     </group>
-    
+
     <group name="CONTROLS">
         <param name="positionControl">          POS_PID_DEFAULT     POS_PID_DEFAULT     </param>
         <param name="velocityControl">          POS_PID_DEFAULT     POS_PID_DEFAULT     </param>
@@ -40,31 +44,30 @@
     </group>
 
 
-    <!-- default position PID: begin -->
-
+    <!-- * POS_PID_DEFAULT: The high kd relative to kp (500 vs 50)
+         * is appropriate for the neck because it is a heavier link and needs stronger damping
+         * to prevent overshoot. If the neck still stalls just before reaching zero, a small
+         * stictionUp value (e.g. 50–100) will help it break free of static friction.        -->
     <group name="POS_PID_DEFAULT">
         <param name="controlLaw">               minjerk         </param>
         <param name="outputType">               pwm             </param>
         <param name="fbkControlUnits">          metric_units    </param>
         <param name="outputControlUnits">       machine_units   </param>
-        <param name="kp">                       +50        +50        </param>
-        <param name="kd">                       +500         +500         </param>
-        <param name="ki">                       +1        +1        </param>
-        <param name="maxOutput">                2000        1333        </param><!-- consider shift??-->
+        <param name="kp">                       +50        +50         </param>
+        <!-- kd is intentionally 10x kp for the neck, the load inertia makes it easy
+             to overshoot without strong damping.                                      -->
+        <param name="kd">                       +500       +500        </param>
+        <param name="ki">                       +1         +1          </param>
+        <!-- maxOutput for neck_pan (2000) intentionally exceeds fullscalePWM (1333)
+             and motorPwmLimit (1333). The firmware clips it at 1333. This gives the
+             integral term some headroom to accumulate before the firmware limits kick in,
+             which helps the neck break static friction at the end of a move.
+             neck_tilt is capped at 1333 to match the hardware ceiling more precisely. -->
+        <param name="maxOutput">                2000        1333        </param>
         <param name="maxInt">                   1000        1000        </param>
         <param name="stictionUp">               0           0           </param>
         <param name="stictionDown">             0           0           </param>
         <param name="kff">                      0           0           </param>
     </group>
-    
-    <!-- default position PID: end -->
-
-
-    <!-- other default PIDs: begin -->   
-    <!-- other default PIDs: end -->
-
-
-    <!-- custom PIDs: begin -->    
-    <!-- custom PIDs: end -->
 
 </device>

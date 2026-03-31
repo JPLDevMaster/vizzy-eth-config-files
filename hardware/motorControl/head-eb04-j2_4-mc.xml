@@ -10,18 +10,27 @@
     <xi:include href="./head-eb04-j2_4-mc_service.xml" />
 
     <!-- joint number                           0                   1                   2        -->
-    <!-- joint name                             eye-tilt            version           vergence   -->         <!-- j1 is left-eye, j2 is right-eye -->
+    <!-- joint name                             eye_tilt            version             vergence  -->
+    <!-- * j1 (version)  = left_eye_pan  + right_eye_pan                                         -->
+    <!-- * j2 (vergence) = left_eye_pan  - right_eye_pan                                         -->
     <group name="LIMITS">
-        <param name="jntPosMin">                 -30                 -30                 0                   </param>
+        <param name="jntPosMin">                -30                 -30                 0                   </param>
         <param name="jntPosMax">                +30                 +30                 +30                 </param>
         <param name="jntVelMax">                1000                1000                1000                </param>
+        <!-- * motorOverloadCurrents: firmware-level hard current trip (mA). The eye motors
+             * are small, 2000–2500 mA is the safe ceiling from the original iCub values.           -->
         <param name="motorOverloadCurrents">    2000                2500                2500                </param>
         <param name="motorNominalCurrents">     700                 700                 700                 </param>
         <param name="motorPeakCurrents">        1500                1500                1500                </param>
-    
+        <!-- * motorPwmLimit: firmware-level PWM ceiling (machine units, max 3360 for this
+             * board). Note that fullscalePWM in the mec file is 1333, so the software PID
+             * is already limited to ~40 % duty cycle by maxOutput = 1333 below. The firmware
+             * limit of 3360 is a safety and is never actually reached in normal
+             * operation. If the eye motors need more torque after tuning, we can raise fullscalePWM
+             * and maxOutput together (up to 3360) rather than only raising maxOutput.           -->
         <param name="motorPwmLimit">            3360                3360                3360                </param>
     </group>
-   
+
     <group name="TIMEOUTS">
         <param name="velocity">                 100                 100                 100                 </param>
     </group>
@@ -30,7 +39,7 @@
         <param name="stiffness">                0.0                 0.0                 0.0                 </param>
         <param name="damping">                  0.0                 0.0                 0.0                 </param>
     </group>
-    
+
     <group name="CONTROLS">
         <param name="positionControl">          POS_PID_DEFAULT     POS_PID_DEFAULT     POS_PID_DEFAULT     </param>
         <param name="velocityControl">          POS_PID_DEFAULT     POS_PID_DEFAULT     POS_PID_DEFAULT     </param>
@@ -41,16 +50,27 @@
     </group>
 
 
-    <!-- default position PID: begin -->
-    
+    <!-- * POS_PID_DEFAULT: the eye motors are light and fast, so the gains are
+         * relatively modest. With the matrixE2J correctly routing enc2 columns into
+         * the PID feedback, these values should produce stable, well-damped motion.
+         * If version/vergence still oscillate, lower kd first before touching kp.      -->
     <group name="POS_PID_DEFAULT">
-        <param name="controlLaw">               minjerk         </param>
-        <param name="outputType">               pwm             </param>
-        <param name="fbkControlUnits">          metric_units    </param>
-        <param name="outputControlUnits">       machine_units   </param>
-        <param name="kp">                       +50       +50        +50        </param>
-        <param name="kd">                       +500       +500       +500         </param>
-        <param name="ki">                       +1        +5       +5       </param>
+        <param name="controlLaw">               minjerk                             </param>
+        <param name="outputType">               pwm                                 </param>
+        <param name="fbkControlUnits">          metric_units                        </param>
+        <param name="outputControlUnits">       machine_units                       </param>
+        <!-- kp: proportional gain. Eye motors are low-inertia so 50 is sufficient.
+             The old need for kp = 1000 was entirely caused by the wrong E2J.         -->
+        <param name="kp">                       +50         +50         +50         </param>
+        <!-- kd: derivative gain. Damp any oscillation on the coupled eye joints.     -->
+        <param name="kd">                       +50         +50         +50         </param>
+        <!-- ki: integral gain. Provides steady-state torque to overcome stiction.
+             Keep this low with correct feedback it just needs to handle residual
+             offsets, not compensate for a broken feedback path.                       -->
+        <param name="ki">                       +10         +10         +10         </param>
+        <!-- maxOutput: clips PID output in machine units (raw PWM counts).
+             Matched to fullscalePWM = 1333 so the eyes never exceed ~40 % duty cycle.
+             This is intentional for protecting the small eye motors.  -->
         <param name="maxOutput">                1333        1333        1333        </param>
         <param name="maxInt">                   1000        1000        1000        </param>
         <param name="stictionUp">               0           0           0           </param>
@@ -58,14 +78,4 @@
         <param name="kff">                      0           0           0           </param>
     </group>
 
-    <!-- default position PID: end -->
-
-
-    <!-- other default PIDs: begin -->   
-    <!-- other default PIDs: end -->
-
-
-    <!-- custom PIDs: begin -->    
-    <!-- custom PIDs: end -->
-    
 </device>

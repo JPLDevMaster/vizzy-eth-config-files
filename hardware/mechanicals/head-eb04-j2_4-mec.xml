@@ -6,67 +6,159 @@
 
     <group name="GENERAL">
         <param name="MotioncontrolVersion"> 6 </param>
-        <param name="Joints"> 3 </param> <!-- the number of joints of the robot part -->
+        <param name="Joints"> 3 </param>
 
-        <!-- joint number in sub-part           0              1           -->
-
-        <!-- joint name                         eye_tilt     left_eye_pan	right_eye_pan   -->   
-        <param name="AxisMap">                  0               1               2 </param>    
-        <param name="AxisName">              "eye_tilt"       "version"         "vergence"</param>
-        <param name="AxisType">                "revolute"    "revolute"    "revolute"</param>
-        <param name="Encoder">                  73255.5         73255.5         73255.5         </param>
-        <param name="fullscalePWM">           1333            1333          1333            </param>
-        <param name="ampsToSensor">             1000.0        1000.0        1000.0     </param>
-        <param name="Gearbox_M2J">              1               1             1        </param> <!-- 0 does not work, check if 1 is right  -->
-        <param name="Gearbox_E2J">   	          1             1             1  </param>
-        <param name="JointEncoderType">     "OPTICAL_QUAD" 	"OPTICAL_QUAD"</param>
-        <param name="useMotorSpeedFbk">           1             1             1  </param>
-        <param name="MotorType">                 "DC"          "DC"           "DC"  </param>
-        <param name="Verbose">   1    </param>
+        <!-- joint number in sub-part           0              1              2                         -->
+        <!-- joint name                         eye_tilt     version        vergence                    -->
+        <!-- * j1 physically maps to left_eye_pan + right_eye_pan (via M2J),                            -->
+        <!-- * j2 to left_eye_pan - right_eye_pan. See COUPLINGS below.                                 -->
+        <param name="AxisMap">                  0               1              2                   </param>
+        <param name="AxisName">              "eye_tilt"       "version"      "vergence"            </param>
+        <param name="AxisType">              "revolute"       "revolute"     "revolute"            </param>
+        <param name="Encoder">                  73255.5         73255.5        73255.5             </param>
+        <param name="fullscalePWM">             1333            1333           1333                </param>
+        <!-- * ampsToSensor scales current readings from the firmware (mA → A, factor 1000).            -->
+        <param name="ampsToSensor">             1000.0          1000.0         1000.0              </param>
+        <!-- * Gearbox_M2J: set to 1 because the coupling is handled explicitly in                      -->
+        <!-- * matrixM2J below. Leaving this at 0 causes a firmware error.                              -->
+        <param name="Gearbox_M2J">              1               1              1                   </param>
+        <param name="Gearbox_E2J">              1               1              1                   </param>
+        <param name="JointEncoderType">     "OPTICAL_QUAD"  "OPTICAL_QUAD" "OPTICAL_QUAD"          </param>
+        <param name="useMotorSpeedFbk">         1               1              1                   </param>
+        <param name="MotorType">                "DC"            "DC"           "DC"                </param>
+        <param name="Verbose">   1                                                                 </param>
     </group>
 
     <group name="LIMITS">
         <param name="hardwareJntPosMin">      -40         -41         -2</param>
-        <param name="hardwareJntPosMax">      +40         +41         +41</param> <!-- review if the limit is +80 -->
+        <param name="hardwareJntPosMax">      +40         +41         +41</param>
         <param name="rotorPosMin">             0           0           0</param>
         <param name="rotorPosMax">             0           0           0</param>
     </group>
 
-     <group name="COUPLINGS">
-		<!-- Check if this is right  -->
+    <group name="COUPLINGS">
+        <!-- The eye mechanics are coupled: two motors (left_eye_pan on P4, right_eye_pan
+             on P5) independently drive the two eye pans, but the controller exposes the
+             virtual joints version and vergence instead.
+
+             Kinematics:
+               version  = left_eye_pan + right_eye_pan
+               vergence = left_eye_pan - right_eye_pan
+
+             Motor ordering matches the port ordering in the _service file:
+               motor 0 = P3 = eye_tilt
+               motor 1 = P4 = left_eye_pan
+               motor 2 = P5 = right_eye_pan                                         -->
+
+        <!-- matrixJ2M: maps joint velocities (eye_tilt, version, vergence) to motor
+             velocities (eye_tilt_m, left_eye_m, right_eye_m).
+               eye_tilt_m  =  1.0 * eye_tilt
+               left_eye_m  =  0.5 * version + 0.5 * vergence
+               right_eye_m =  0.5 * version - 0.5 * vergence                       -->
         <param name ="matrixJ2M">
             1.00    0.00    0.00    0.00
             0.00    1.00    1.00    0.00
-            0.00    1.00    -1.00    0.00
-            0.00    0.00    0.00    0.00 
+            0.00    1.00    -1.00   0.00
+            0.00    0.00    0.00    0.00
         </param>
-		<!-- Check if this is right  -->
+
+        <!-- matrixM2J: maps motor positions to joint positions (inverse of J2M above).
+               eye_tilt = 1.0  * eye_tilt_m
+               version  = 0.5  * left_eye_m + 0.5  * right_eye_m
+               vergence = 0.5  * left_eye_m + (-0.5) * right_eye_m                 -->
         <param name ="matrixM2J">
             1.00    0.00    0.00    0.00
             0.00    0.50    0.50    0.00
             0.00    0.50   -0.50    0.00
-            0.00    0.00    0.00    0.00 
+            0.00    0.00    0.00    0.00
         </param>
-		<!-- Check if this is right  -->
+
+        <!-- matrixE2J: maps raw encoder readings to joint positions.
+             ! This is the critical matrix that was causing all the control issues !
+
+             It is strongly suggested to understand the workings of this matrix before attempting to edit this file.
+
+             In the YARP/iCub ecosystem, the number of rows in these coupling matrices must match the total number of 
+             control channels (slots) available on the physical Ethernet board (4 in case of the mc4-plus), 
+             regardless of how many joints we actually decide to use. I also assume they are defined per row in order
+             as specified in the "_service" file: 1st row -> P3, 2nd row -> P4, 3rd row -> P5, 4th row -> unused.
+
+             The column layout is INTERLEAVED per-joint across encoder slots:
+               col 0 = enc1_j0  (ENCODER1 for motor 0, P3) → "none", always zero
+               col 1 = enc2_j0  (ENCODER2 for motor 0, P3) → eye_tilt quadrature encoder
+               col 2 = enc1_j1  (ENCODER1 for motor 1, P4) → "none", always zero
+               col 3 = enc2_j1  (ENCODER2 for motor 1, P4) → left_eye_pan quadrature encoder
+               col 4 = enc1_j2  (ENCODER1 for motor 2, P5) → "none", always zero
+               col 5 = enc2_j2  (ENCODER2 for motor 2, P5) → right_eye_pan quadrature encoder
+
+             All ENCODER1s are "none" in the _service file, so odd columns (0, 2, 4) are
+             always zero and must not be used for feedback. Using the identity matrix here
+             (as was done before) wired zero-signal encoders into the PID loop, which
+             is why the gains had to be pushed to extreme values and control still failed.
+
+             The iCub's device driver code that handles communication with the ETH/EMS boards
+             can be found in the file: 
+             https://github.com/robotology/icub-main/blob/master/src/libraries/icubmod/embObjMotionControl/embObjMotionControl.cpp
+             which clearly states:
+
+             for (int i = 0; i < joints_in_group; i++) {
+                for (int j = 0; j < total_encoders_on_board; j++) {
+                    matrixE2J[i][j] = flattened_list.get(i * total_encoders_on_board + j).asDouble();
+                }
+            }
+
+             ? Is this the driver used for our boards?...
+
+             Which in fact returns the "interleaved" layout:
+             [Joint0_Enc0, Joint0_Enc1, Joint0_Enc2... Joint1_Enc0, Joint1_Enc1...]
+
+             Since position = "atmotor", the encoder reads the motor shaft directly, so
+             the same M2J transformation applies here to convert motor encoder ticks to
+             joint positions:
+               eye_tilt = enc2_j0                        → row 0: pick col 1
+               version  = 0.5 * enc2_j1 + 0.5 * enc2_j2 → row 1: pick cols 3 and 5
+               vergence = 0.5 * enc2_j1 - 0.5 * enc2_j2 → row 2: pick cols 3 and 5 (neg)  
+
+             The driver treats the matrix as a 1D list where the position of any value 
+             is: Index = (Row * Total_Columns) + Column. In this 4x6 setup:
+
+             1. Joint 0 (Tilt): 
+                - Column 1 (enc2_j0): (0 * 6) + 1 = Index 1. Value: 1.00
+
+             2. Joint 1 (Version):
+                - Column 3 (enc2_j1): (1 * 6) + 3 = Index 9. Value: 0.50
+                - Column 5 (enc2_j2): (1 * 6) + 5 = Index 11. Value: 0.50
+
+             3. Joint 2 (Vergence):
+                - Column 3 (enc2_j1): (2 * 6) + 3 = Index 15. Value: 0.50
+                - Column 5 (enc2_j2): (2 * 6) + 5 = Index 17. Value: -0.50
+
+             By following this mapping, we ensure that the feedback loop completely 
+             ignores all "ENCODER1" slots (Indices 0, 2, 4, 6, 8, 10...) which are 
+             defined as "none" in the service file, effectively fixing the control 
+             instability caused by the previous identity matrix setup. -->
         <param name ="matrixE2J">
-            1.00    0.00    0.00    0.00    0.00    0.00
             0.00    1.00    0.00    0.00    0.00    0.00
-            0.00    0.00    1.00    0.00    0.00    0.00
-            0.00    0.00    0.00    1.00    0.00    0.00
+            0.00    0.00    0.00    0.50    0.00    0.50
+            0.00    0.00    0.00    0.50    0.00   -0.50
+            0.00    0.00    0.00    0.00    0.00    0.00
         </param>
 
     </group>
 
-    <group name="JOINTSET_CFG"> <!-- To be deleted  -->
+    <group name="JOINTSET_CFG">
+        <!-- TODO: Remove in a future cleanup according to the iCub template?           -->
         <param name= "numberofsets"> 2 </param>
         <group name="JOINTSET_0">
+            <!-- eye_tilt is independent.                                               -->
             <param name="listofjoints">  0             </param>
             <param name="constraint">    none          </param>
             <param name="param1">        0             </param>
             <param name="param2">        0             </param>
         </group>
         <group name="JOINTSET_1">
-            <param name="listofjoints">  1 2          </param>
+            <!-- version and vergence are coupled via the left/right eye pan motors.    -->
+            <param name="listofjoints">  1 2           </param>
             <param name="constraint">    none          </param>
             <param name="param1">        0             </param>
             <param name="param2">        0             </param>

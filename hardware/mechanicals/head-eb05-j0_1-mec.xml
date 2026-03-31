@@ -6,70 +6,97 @@
 
     <group name="GENERAL">
         <param name="MotioncontrolVersion"> 6 </param>
-        <param name="Joints"> 2 </param> <!-- the number of joints of the robot part -->
+        <param name="Joints"> 2 </param>
 
         <!-- joint number in sub-part           0              1           -->
-
-        <!-- joint name                         neck_pan     neck_tilt   -->   
-        <param name="AxisMap">                  0               1               </param>    
-        <param name="AxisName">              "neck_pan"       "neck_tilt"     </param>
-        <param name="AxisType">                "revolute"    "revolute"         </param>
+        <!-- joint name                         neck_pan     neck_tilt   -->
+        <param name="AxisMap">                  0               1               </param>
+        <param name="AxisName">              "neck_pan"       "neck_tilt"       </param>
+        <param name="AxisType">              "revolute"       "revolute"        </param>
         <param name="Encoder">                  73255.5         73255.5         </param>
-        <param name="fullscalePWM">           1333            1333            </param>
-        <param name="ampsToSensor">             1000.0             1000.0             </param>
-        <param name="Gearbox_M2J">              1          1          </param> <!-- 0 on this value caused error, check if 1 is right  -->
-	<param name="JointEncoderType">     "OPTICAL_QUAD" 	"OPTICAL_QUAD"</param>
-        <param name="Gearbox_E2J">   	          1             1               </param>
-        <param name="useMotorSpeedFbk">           1             1               </param>
-        <param name="MotorType">                 "DC"          "DC"             </param>
-        <param name="Verbose">   1    </param>
+        <param name="fullscalePWM">             1333            1333            </param>
+        <param name="ampsToSensor">             1000.0          1000.0          </param>
+        <!-- * Gearbox_M2J: set to 1 as the neck joints are uncoupled -> the identity
+             * matrices below confirm this. A value of 0 causes a firmware startup error. -->
+        <param name="Gearbox_M2J">              1               1               </param>
+        <param name="JointEncoderType">     "OPTICAL_QUAD"  "OPTICAL_QUAD"      </param>
+        <param name="Gearbox_E2J">              1               1               </param>
+        <param name="useMotorSpeedFbk">         1               1               </param>
+        <param name="MotorType">                "DC"            "DC"            </param>
+        <param name="Verbose">   1                                              </param>
     </group>
 
     <group name="LIMITS">
-        <param name="hardwareJntPosMin">      -55         -40         </param><!-- These hardware limits should match the old parameter Zeros  -->
+        <!-- These hardware limits should bracket the full mechanical range so the
+             calibration search finds a clean stop on each side.                    -->
+        <param name="hardwareJntPosMin">      -55         -40         </param>
         <param name="hardwareJntPosMax">      +55         +40         </param>
         <param name="rotorPosMin">             0           0           </param>
         <param name="rotorPosMax">             0           0           </param>
     </group>
 
-     <group name="COUPLINGS">
-		<!-- Check if this is right  -->
-        <param name="matrixJ2M">  
+    <group name="COUPLINGS">
+        <!-- The neck joints are fully independent (no mechanical coupling), so all
+             three matrices are identity. This is straightforward -> one motor per joint,
+             one encoder per motor.                                                  -->
+        <param name="matrixJ2M">
             1.00    0.00    0.00    0.00
             0.00    1.00    0.00    0.00
             0.00    0.00    1.00    0.00
-            0.00    0.00    0.00    1.00 
+            0.00    0.00    0.00    1.00
         </param>
-		<!-- Check if this is right  -->
-        <param name="matrixM2J">  
+        <param name="matrixM2J">
             1.00    0.00    0.00    0.00
             0.00    1.00    0.00    0.00
             0.00    0.00    1.00    0.00
-            0.00    0.00    0.00    1.00 
+            0.00    0.00    0.00    1.00
         </param>
-		<!-- Check if this is right  -->
-        <param name ="matrixE2J"> 
-            1.00    0.00    0.00    0.00    0.00    0.00
+
+        <!-- matrixE2J: maps raw encoder readings to joint positions.
+             ! Same interleaved-column layout issue as on eb04 applies here too.
+
+             Please read the comments in that file!
+
+             Column layout for this 2-joint board:
+               col 0 = enc1_j0 (ENCODER1, motor 0, P3) → "none", always zero
+               col 1 = enc2_j0 (ENCODER2, motor 0, P3) → neck_pan quadrature encoder
+               col 2 = enc1_j1 (ENCODER1, motor 1, P4) → "none", always zero
+               col 3 = enc2_j1 (ENCODER2, motor 1, P4) → neck_tilt quadrature encoder
+               col 4 = enc1_j2 (unused, padding)        → zero
+               col 5 = enc2_j2 (unused, padding)        → zero
+
+             Since ENCODER1 is "none" on both joints, columns 0 and 2 are always zero.
+             The old identity matrix routed these zero-signal columns into the PID
+             feedback path, which is why the neck would slam to its limit and stall
+             just short of zero on the return -> it was running effectively open-loop.
+
+             Since position = "atmotor" and the neck has no coupling (M2J = identity),
+             the E2J is simply: each joint reads its own enc2 column only:
+               neck_pan  = enc2_j0 → col 1
+               neck_tilt = enc2_j1 → col 3                                          -->
+        <param name ="matrixE2J">
             0.00    1.00    0.00    0.00    0.00    0.00
-            0.00    0.00    1.00    0.00    0.00    0.00
             0.00    0.00    0.00    1.00    0.00    0.00
+            0.00    0.00    0.00    0.00    0.00    0.00
+            0.00    0.00    0.00    0.00    0.00    0.00
         </param>
 
     </group>
 
-    <group name="JOINTSET_CFG"> <!-- To be deleted  -->
+    <group name="JOINTSET_CFG">
+        <!-- TODO: Removed in a future cleanup? See iCub template notes.          -->
         <param name= "numberofsets"> 2 </param>
         <group name="JOINTSET_0">
             <param name="listofjoints">  0           </param>
-            <param name="constraint">    none          </param>
-            <param name="param1">        0             </param>
-            <param name="param2">        0             </param>
+            <param name="constraint">    none        </param>
+            <param name="param1">        0           </param>
+            <param name="param2">        0           </param>
         </group>
         <group name="JOINTSET_1">
             <param name="listofjoints">  1           </param>
-            <param name="constraint">    none          </param>
-            <param name="param1">        0             </param>
-            <param name="param2">        0             </param>
+            <param name="constraint">    none        </param>
+            <param name="param1">        0           </param>
+            <param name="param2">        0           </param>
         </group>
     </group>
 

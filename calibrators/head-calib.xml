@@ -2,35 +2,101 @@
 <!DOCTYPE devices PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
 
 <device xmlns:xi="http://www.w3.org/2001/XInclude" name="head-calibrator" type="parametricCalibratorEth">
-	<xi:include href="../general.xml" />
-	<group name="GENERAL">
-		<param name="joints"> 5 </param>
-		<param name="deviceName"> Head_Calibrator </param>
-	</group>
-	<group name="HOME">
-		<param name="positionHome"> 0 0 0 0 0 </param>
-		<param name="velocityHome"> 10 10 10 10 -20 </param>
-	</group>
-	<group name="CALIBRATION">
-		<param name="calibrationType"> 5 5 5 5 5 </param>
-		<param name="calibration1"> 400.0 600.0 1000.0 1000.0 1000.0</param>
-		<param name="calibration2"> 0.0 0.0 0.0 2932914.5 2932914.5 </param><!-- Review these values -->
-		<param name="calibration3"> 0.0 0.0 0.0 0.0 0.0 </param>
-		<param name="calibration4"> 0 0 0 0 0  </param>
-        <param name="calibration5"> 0 0 0 0 0 </param>
-        <param name="calibrationZero"> 0.0 0.0 0.0 0.0 0.0 </param>
-		<param name="calibrationDelta"> -55.0 -40.0 -40.0 0.0 0.0 </param>
-		<param name="startupPosition"> 0.0 0.0 0.0 0.0 0.0  </param>
-		<param name="startupVelocity"> 10.0 10.0 20.0 10.0 10.0 </param>
-		<param name="startupMaxPwm"> 1200.0 1400.0 1200.0 1200.0 1200.0 </param>
-		<param name="startupPosThreshold"> 4.5 4.5 4.5 4.5 4.5  </param>
-	</group>
-	<param name="CALIB_ORDER"> (0 1 2) (3 4)</param> <!-- (0 1 2) (3 4)-->
-	<action phase="startup" level="10" type="calibrate">
-		<param name="target">head-mc_wrapper</param>
-	</action>
-	<action phase="interrupt1" level="1" type="park">
-		<param name="target">head-mc_wrapper</param>
-	</action>
-	<action phase="interrupt3" level="1" type="abort" />
-	</device>
+    <xi:include href="../general.xml" />
+
+    <group name="GENERAL">
+        <param name="joints"> 5 </param>
+        <param name="deviceName"> Head_Calibrator </param>
+    </group>
+
+    <!-- Park position: all joints return to 0° at the velocities below when the
+         yarprobotinterface shuts down. velocityHome for vergence is negative (-20)
+         to drive the eyes inward before power-off (maybe?).                         -->
+    <group name="HOME">
+        <param name="positionHome"> 0 0 0 0 0 </param>
+        <param name="velocityHome"> 10 10 10 10 -20 </param>
+    </group>
+
+    <!-- Joint ordering as seen by the wrapper (and therefore the calibrator):
+         index  name          board   device-joint
+           0    neck_pan      eb05    j0
+           1    neck_tilt     eb05    j1
+           2    eye_tilt      eb04    j0
+           3    version       eb04    j1
+           4    vergence      eb04    j2                                             -->
+
+    <group name="CALIBRATION">
+        <!-- calibrationType 5: the joint moves toward the hard stop, detects the
+             current spike (stall), then shifts by calibrationDelta to define zero.   -->
+        <param name="calibrationType">    5       5       5       5       5       </param>
+
+        <!-- Calibration parameters description can be found in this document:
+        ? Is it updated?... It is from 2017 apparently.
+
+        https://github.com/robotology/icub-main/files/1527411/iCub_R1_calibrations.pdf
+
+        -->
+
+        <!-- calibration1: PWM applied during the hard-stop search, in machine
+             units.  -->
+        <param name="calibration1">   400.0   600.0   1000.0  1000.0  1000.0  </param>
+
+        <!-- calibration2: Raw position at hardstop. -->
+        <param name="calibration2">   0.0     0.0     0.0     2932914.5   2932914.5   </param>
+        
+        <!-- calibration3: Not used apperantly... -->
+        <param name="calibration3">   0.0     0.0     0.0     0.0         0.0         </param>
+
+        <!-- calibration4: Not used apperantly...  -->
+        <param name="calibration4">   0       0       0       0           0           </param>
+
+        <!-- calibration5: Not used apperantly...  -->
+        <param name="calibration5">   0       0       0       0           0           </param>
+
+        <!-- calibrationZero: encoder offset added on top of the delta. Left at 0.     -->
+        <param name="calibrationZero">    0.0     0.0     0.0     0.0     0.0     </param>
+
+        <!-- calibrationDelta: angular offset (degrees) from the hard stop to the
+             electrical zero position (maybe? Not in document...). 
+             The sign must point away from the stop.
+               neck_pan  (-55°): full mechanical range is ±55°, zero = midpoint.
+               neck_tilt (-40°): full range is -40° to +37°, zero = near the bottom.
+               eye_tilt  (-40°): range is -40° to +40°, zero = mechanical center.
+               version   (0°):   version is a virtual joint, no hard-stop delta needed.
+               vergence  (0°):   same as above.                                        -->
+        <param name="calibrationDelta">   -55.0   -40.0   -40.0   0.0     0.0     </param>
+
+        <!-- startupPosition: target position (degrees) to move to after calibration
+             completes. All joints go to zero (center / home).                         -->
+        <param name="startupPosition">    0.0     0.0     0.0     0.0     0.0     </param>
+
+        <!-- startupVelocity: speed (degrees/s) for the post-calibration move to home. -->
+        <param name="startupVelocity">    10.0    10.0    20.0    10.0    10.0    </param>
+
+        <!-- startupMaxPwm: PWM ceiling during the startup move. Kept below fullscalePWM
+             (1333) on the eye board so the small eye motors are not overloaded while
+             still making their way to the home position.                               -->
+        <param name="startupMaxPwm">  1200.0  1400.0  1200.0  1200.0  1200.0  </param>
+
+        <!-- startupPosThreshold: position error (degrees) within which the startup move
+             is considered complete for each joint.                                     -->
+        <param name="startupPosThreshold">    4.5     4.5     4.5     4.5     4.5     </param>
+    </group>
+
+    <!-- CALIB_ORDER defines which joints calibrate in parallel, and in what sequence
+         the groups fire. Each parenthesised group runs simultaneously; groups run
+         left-to-right in series.
+
+         * Neck joints (0 1) and eye_tilt (2) calibrate first and in parallel because
+         * they are mechanically independent. Version and vergence (3 4) follow after. -->
+    <param name="CALIB_ORDER"> (0 1 2) (3 4) </param>
+
+    <action phase="startup" level="10" type="calibrate">
+        <param name="target">head-mc_wrapper</param>
+    </action>
+    <action phase="interrupt1" level="1" type="park">
+        <param name="target">head-mc_wrapper</param>
+    </action>
+    <action phase="interrupt3" level="1" type="abort" />
+
+</device>
