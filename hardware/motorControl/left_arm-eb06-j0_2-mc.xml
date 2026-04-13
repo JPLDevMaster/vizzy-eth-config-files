@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE devices PUBLIC "-//YARP//DTD yarprobotinterface 3.0//EN" "http://www.yarp.it/DTD/yarprobotinterfaceV3.0.dtd">
+
+
+<device xmlns:xi="http://www.w3.org/2001/XInclude" name="left_arm-eb06-j0_2-mc" type="embObjMotionControl">
+
+    <xi:include href="../../general.xml" />
+    <xi:include href="../../hardware/electronics/left_arm-eb06-j0_2-eln.xml" />
+    <xi:include href="../../hardware/mechanicals/left_arm-eb06-j0_2-mec.xml" />
+    <xi:include href="./left_arm-eb06-j0_2-mc_service.xml" />
+
+    <!-- joint number                           0                   1                   2                        -->
+    <!-- joint name                             Left Shldr Scapula  Left Shldr Flection Left Shldr Abduction     -->      
+    <group name="LIMITS">
+        <param name="jntPosMin">                -18                 -75                 0                   </param> <!-- Imported from previous version -->
+        <param name="jntPosMax">                +18                 +135                +70                 </param> <!-- Imported from previous version -->
+        <param name="jntVelMax">                1000                1000                1000                </param>
+        <param name="motorOverloadCurrents">    3000                3000                3000                </param> <!-- Imported from previous version -->
+        <param name="motorNominalCurrents">     800                 800                 800                 </param> <!-- Imported from head motors      -->
+        <param name="motorPeakCurrents">        1000                1000                1000                </param> <!-- Imported from head motors      -->
+    
+        <param name="motorPwmLimit">            2000                2000                2000                </param> <!-- Imported from head motors      -->
+    </group>
+   
+    <group name="TIMEOUTS"> <!-- Imported from previous version -->
+        <param name="velocity">                 100                 100                 100                 </param>
+    </group>
+
+    <group name="IMPEDANCE"> <!-- Imported from head motors      -->
+        <param name="stiffness">                0.0                 0.0                 0.0                 </param> 
+        <param name="damping">                  0.0                 0.0                 0.0                 </param> 
+    </group>
+    
+    <group name="CONTROLS">
+        <param name="positionControl">          POS_PID_DEFAULT     POS_PID_DEFAULT     POS_PID_DEFAULT     </param>
+        <param name="velocityControl">          POS_PID_DEFAULT     POS_PID_DEFAULT     POS_PID_DEFAULT     </param>
+        <param name="mixedControl">             POS_PID_DEFAULT     POS_PID_DEFAULT     POS_PID_DEFAULT     </param>
+        <param name="torqueControl">            TRQ_PID_DEFAULT     TRQ_PID_DEFAULT     TRQ_PID_DEFAULT     </param>
+        <param name="currentPid">               2FOC_CUR_CONTROL    2FOC_CUR_CONTROL    2FOC_CUR_CONTROL    </param>
+        <param name="speedPid">                 2FOC_VEL_CONTROL    2FOC_VEL_CONTROL    2FOC_VEL_CONTROL    </param>
+    </group>
+
+
+    <!-- default position PID: begin -->
+    
+    <!-- TODO: Review and tune these parameters -->
+    <group name="POS_PID_DEFAULT"> <!-- Imported from previous version -->
+        <param name="controlLaw">               minjerk        			            </param>
+        <param name="outputType">               pwm            			            </param>
+        <param name="fbkControlUnits">          metric_units    	                </param>
+        <param name="outputControlUnits">       machine_units   	                </param>
+        <param name="kp">                       +5          +1      	+750        </param>
+        <param name="kd">                       +0          +0          +2          </param>
+        <param name="ki">                       +0          +0          +3          </param>
+        <param name="maxOutput">                1333        1333        1333        </param>
+        <param name="maxInt">                   1000        1000        1000        </param>
+        <param name="stictionUp">               0           0           0           </param>
+        <param name="stictionDown">             0           0           0           </param>
+        <param name="kff">                      0           0           0           </param>
+    </group>
+
+    <!-- default position PID: end -->
+
+
+    <!-- other default PIDs: begin -->   
+
+    <!-- TODO: Review and tune these parameters -->
+    <group name="TRQ_PID_DEFAULT"> <!-- Imported from iCub Lisboa v2.14.0 -->
+        <param name="controlLaw">           torque                              </param>
+        <param name="outputType">           pwm                                 </param>
+        <param name="fbkControlUnits">      metric_units                        </param>
+        <param name="outputControlUnits">   machine_units                       </param>
+        <param name="kp">                   200         200         250         </param>
+        <param name="kd">                   0           0           0           </param>
+        <param name="ki">                   0           0           0           </param>
+        <param name="maxOutput">            8000        8000        8000        </param>
+        <param name="maxInt">               500         500         500         </param>
+        <param name="ko">                   0           0           0           </param>
+        <param name="stictionUp">           0.5         0.5         1           </param>
+        <param name="stictionDown">         -0.7        -0.7       -0.8         </param>
+        <param name="kff">                  1           1           1           </param>
+        <param name="viscousPos">           0.0030      0.0006      0.0007      </param>
+        <param name="viscousNeg">           0.0030      0.0006      0.0007      </param>
+        <param name="coulombPos">           0           0           0           </param>
+        <param name="coulombNeg">           0           0           0           </param>
+        <param name="velocityThres">        0           0           0           </param>
+        <param name="filterType">           0           0           0           </param>
+        <param name="ktau">                 180         464         463         </param>
+    </group>
+    
+    <group name="2FOC_CUR_CONTROL"> <!-- Imported from iCub Lisboa v2.14.0 -->
+        <param name="controlLaw">           low_lev_current                     </param>
+        <param name="fbkControlUnits">      machine_units                       </param>
+        <param name="outputControlUnits">   machine_units                       </param>
+        <param name="kp">                   8           8           8           </param>
+        <param name="kd">                   0           0           0           </param>
+        <param name="ki">                   2           2           2           </param>
+        <param name="shift">                10          10          10          </param>
+        <param name="maxOutput">            32000       32000       32000       </param>
+        <param name="maxInt">               32000       32000       32000       </param>
+        <param name="kff">                  0           0           0           </param>
+    </group>
+
+    <group name="2FOC_VEL_CONTROL"> <!-- Imported from iCub Lisboa v2.14.0 -->
+        <param name="controlLaw">           low_lev_speed                       </param>
+        <param name="fbkControlUnits">      machine_units                       </param>
+        <param name="outputControlUnits">   machine_units                       </param>
+        <param name="kff">                  0           0           0           </param>
+        <param name="kp">                   12          12          12          </param>
+        <param name="kd">                   0           0           0           </param>
+        <param name="ki">                   16          16          16          </param>
+        <param name="shift">                10          10          10          </param>
+        <param name="maxOutput">            32000       32000       32000       </param>
+        <param name="maxInt">               32000       32000       32000       </param>
+    </group>
+
+    <!-- other default PIDs: end -->
+
+
+    <!-- custom PIDs: begin -->    
+    <!-- custom PIDs: end -->
+    
+</device>
