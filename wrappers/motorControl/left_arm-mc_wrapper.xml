@@ -4,7 +4,7 @@
 
     <device xmlns:xi="http://www.w3.org/2001/XInclude" name="left_arm-mc_wrapper" type="controlboardwrapper2">
         <paramlist name="networks">
-            <elem name="FirstSetOfJoints">  (0  1  0  1) </elem>
+            <elem name="FirstSetOfJoints">  (0  2  0  2) </elem> <!-- 3 joints starting at index 0 -->
         </paramlist>
 
         <param name="period"> 10                        </param>

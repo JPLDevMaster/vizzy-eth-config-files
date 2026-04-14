@@ -16,9 +16,14 @@
 	<xi:include href="./hardware/motorControl/head-eb04-j2_4-mc.xml" /> 
     <xi:include href="./hardware/motorControl/head-eb05-j0_1-mc.xml" />  
     <xi:include href="./wrappers/motorControl/head-mc_wrapper.xml" />
-	
+    
+    <!-- LEFT ARM -->
+    <xi:include href="./hardware/motorControl/left_arm-eb06-j0_2-mc.xml" />
+    <xi:include href="./wrappers/motorControl/left_arm-mc_wrapper.xml" />
 	
 	<!--  CALIBRATORS -->
 	<xi:include href="./calibrators/head-calib.xml" />
+    <xi:include href="./calibrators/left_arm-calib.xml" />
 	</devices>
+
 </robot> 
