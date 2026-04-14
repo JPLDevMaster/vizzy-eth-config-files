@@ -31,6 +31,7 @@
         <param name="damping">                  0.0                 0.0                 0.0                 </param> 
     </group>
     
+    <!-- TODO: Given we just use position control, check if the other controllers can be removed! -->
     <group name="CONTROLS">
         <param name="positionControl">          POS_PID_DEFAULT     POS_PID_DEFAULT     POS_PID_DEFAULT     </param>
         <param name="velocityControl">          POS_PID_DEFAULT     POS_PID_DEFAULT     POS_PID_DEFAULT     </param>
