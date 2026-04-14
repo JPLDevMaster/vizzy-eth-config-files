@@ -64,7 +64,7 @@
 
     <!-- other default PIDs: begin -->   
 
-    <!-- TODO: Review and tune these parameters -->
+    <!-- TODO: These controllers are not used. Check if they can be removed! -->
     <group name="TRQ_PID_DEFAULT"> <!-- Imported from iCub Lisboa v2.14.0 -->
         <param name="controlLaw">           torque                              </param>
         <param name="outputType">           pwm                                 </param>
