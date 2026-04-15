@@ -38,18 +38,6 @@
         <param name="HasSpeedEncoder">       0           0             0             </param>
         <param name="RotorIndexOffset">      0           0             0             </param>
         <param name="MotorPoles">            8           8             8             </param>
-
-        <!-- 
-        Added this 'Kbemf' parameter to fix the error:
-
-            [ERROR] kbemf parameter not found for board left_arm-eb06-j0_2 in bottle TRQ_PID_DEFAULT (controlLaw torque) (outputType pwm) 
-            (fbkControlUnits metric_units) (outputControlUnits machine_units) (kp 200 200 250) (kd 0 0 0) (ki 0 0 0) (maxOutput 8000 8000 8000) 
-            (maxInt 500 500 500) (ko 0 0 0) (stictionUp 0.5 0.5 1) (stictionDown -0.699999999999999955591 -0.699999999999999955591 -0.800000000000000044409) 
-            (kff 1 1 1) (viscousPos 0.00300000000000000006245 0.000599999999999999947438 0.000699999999999999992888) 
-            (viscousNeg 0.00300000000000000006245 0.000599999999999999947438 0.000699999999999999992888) (coulombPos 0 0 0) (coulombNeg 0 0 0) 
-            (velocityThres 0 0 0) (filterType 0 0 0) (ktau 180 464 463)
-         -->
-        <param name="Kbemf">                 0           0             0             </param>
     </group>
 
 
