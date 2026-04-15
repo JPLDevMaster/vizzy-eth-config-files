@@ -7,7 +7,7 @@
 
 **🚧 Under Active Development 🚧**
 
-This repository contains the YARP `yarprobotinterface` configuration files for the Vizzy humanoid robot's Ethernet (ETH)-based motion control boards. It covers the **head** (eyes and neck) and **left arm** (shoulder) subsystems, providing hardware-level configuration for motor control, encoder mapping, joint coupling, calibration, and YARP port wiring.
+This repository contains the YARP `yarprobotinterface` configuration files for the Vizzy humanoid robot's Ethernet (ETH)-based motion control boards. It covers the **head** (eyes and neck) and **left arm** (shoulder) subsystems so far, providing hardware-level configuration for motor control, encoder mapping, joint coupling, calibration, and YARP port wiring.
 
 > **Note on YARP documentation:** YARP's own documentation for `embObjMotionControl`, calibrators, and related devices is notoriously sparse. This README attempts to bridge that gap by providing detailed explanations of every configuration parameter and its effect on robot behaviour.
 
@@ -30,7 +30,7 @@ This repository contains the YARP `yarprobotinterface` configuration files for t
 - [Joints Reference](#joints-reference)
 - [YARP Concepts Explained](#yarp-concepts-explained)
 - [Eye Coupling Explained](#eye-coupling-explained)
-- [Board Types: MC4plus vs EMS4](#board-types-mc4plus-vs-ems4)
+- [Board Types: MC4plus, EMS4, and 2FOC](#board-types-mc4plus-ems4-and-2foc)
 - [Documentation & Citation](#documentation--citation)
 - [Reporting Issues](#reporting-issues)
 
@@ -698,20 +698,49 @@ The `eye_tilt` joint (axis 0) is uncoupled and controls vertical gaze directly w
 
 ---
 
-## Board Types: MC4plus vs EMS4
+## Board Types: MC4plus, EMS4, and 2FOC
 
-| Feature | MC4plus (EB04, EB05) | EMS4 (EB06) |
-|---------|---------------------|------------|
-| Axes per board | Up to 4 | Up to 4 |
-| Motor type supported | Brushed DC | Brushed DC with FOC |
-| Actuator interface | Direct PWM | CAN bus (FOC drivers) |
-| Primary encoder | Quadrature (on-board) | AEA (absolute, at joint) |
-| Secondary encoder | None | ROIE (rotor incremental, via CAN) |
-| Joint-level absolute position | No (requires calibration) | Yes (AEA encoder) |
-| Torque control | No | Yes (via 2FOC) |
-| Suitable for | Head joints (light, low-inertia) | Arm joints (heavy, precision needed) |
+Vizzy's ETH-based motion control stack uses three distinct board types: the **MC4plus** and **EMS4** are Ethernet-connected master boards that communicate with the PC104 over the robot's LAN, while the **2FOC** is a CAN-connected motor driver that attaches to an EMS4 board to provide Field-Oriented Control (FOC) for each individual joint.
 
-The MC4plus is a simpler board suited for the head's light DC motors where quadrature encoders and position control are sufficient. The EMS4 supports CAN-connected FOC driver boards, enabling torque control and absolute position feedback via AEA encoders -- essential for the arm's heavier joints.
+| Feature | MC4plus (EB04, EB05) | EMS4 (EB06) | 2FOC (per joint, on CAN) |
+|---------|---------------------|------------|--------------------------|
+| Network interface | Ethernet (ETH) | Ethernet (ETH) | CAN bus (via EMS4) |
+| Axes per board | Up to 4 | Up to 4 | 1 (dedicated per motor) |
+| Motor type supported | Brushed DC | Brushless DC (BLDC) | Brushless DC (BLDC) |
+| Actuator interface | Direct PWM | CAN bus (to 2FOC boards) | Direct drive (FOC phase currents) |
+| Primary encoder | Quadrature (on-board) | AEA (absolute, at joint) | ROIE (rotor incremental) |
+| Secondary encoder | None | ROIE (rotor incremental, via CAN) | None |
+| Joint-level absolute position | No (requires calibration) | Yes (AEA encoder) | Yes(?) |
+| Torque / current control | No | Yes (via 2FOC) | Yes (inner FOC current loop) |
+| Field-Oriented Control | No | Delegated to 2FOC | Yes (native) |
+| Suitable for | Head joints (light, low-inertia) | Arm joints (heavy, precision needed) | Individual arm motors |
+
+### MC4plus
+
+The MC4plus is a 4-axis Ethernet motion control board designed for light-duty joints. It directly drives brushed DC motors via PWM and reads quadrature encoders on-board. Because it has no absolute encoder interface, joints require a calibration phase at startup to find their zero reference. It is the right choice for Vizzy's head given that the eye and neck joints are low-inertia and position control alone is sufficient.
+
+<p align="center">
+  <img src="resources/MC4_Plus_Board_Schema.png" alt="MC4plus Board Schema" width="600"/>
+  <br><em>MC4plus board schema</em>
+</p>
+
+### EMS4
+
+The EMS4 (Ethernet Motion Supervisor, 4 axes) is a more capable Ethernet board that acts as a CAN master. Rather than driving motors directly, it delegates low-level motor control to 2FOC boards connected on its CAN bus. It reads AEA (Absolute Encoder with Analog output) sensors directly at the joint level, providing true absolute position feedback without requiring homing. Torque control is achieved through the 2FOC boards' inner current loop. It is used for Vizzy's left arm shoulder, where heavier loads and higher precision demand both absolute position knowledge and torque regulation.
+
+<p align="center">
+  <img src="resources/EMS_Board_Schema.png" alt="EMS4 Board Schema" width="600"/>
+  <br><em>EMS4 board schema</em>
+</p>
+
+### 2FOC
+
+The 2FOC (2-axis Field-Oriented Control) board is a CAN-connected motor driver developed by IIT. It is not an Ethernet board and does not communicate with the PC104 directly, it receives setpoints from an EMS4 master over CAN and executes the inner FOC control loop locally at high frequency. Each 2FOC board drives two brushless DC motors and reads a ROIE (Rotor Incremental Encoder) to close the current/velocity loop. Multiple 2FOC boards are chained on the EMS4's CAN bus, up to two per joint.
+
+<p align="center">
+  <img src="resources/2FOC_Board_Schema.png" alt="2FOC Board Schema" width="600"/>
+  <br><em>2FOC board schema</em>
+</p>
 
 ---
 
@@ -736,6 +765,7 @@ For additional YARP documentation (sparse as it may be):
 - [YARP documentation](https://www.yarp.it/latest/)
 - [yarprobotinterface guide](https://www.yarp.it/latest/yarprobotinterface.html)
 - [embObjMotionControl source (iCub)](https://github.com/robotology/icub-main)
+- [iCub (mesh) documentation](https://mesh-iit.github.io/documentation/)
 
 ---
 

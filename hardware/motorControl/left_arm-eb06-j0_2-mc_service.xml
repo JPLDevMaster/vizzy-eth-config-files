@@ -29,7 +29,7 @@
             
 
             <group name="JOINTMAPPING">
-
+                <!-- TODO: Revise the number of joints/columns in this group. "CAN1:3:0" ? -->
                 <group name="ACTUATOR">                
                     <param name="type">             eomc_act_foc        foc                 foc             </param>
                     <param name="port">             CAN1:1:0            CAN1:2:0            CAN1:3:0        </param>
