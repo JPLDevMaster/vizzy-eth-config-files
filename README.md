@@ -720,7 +720,7 @@ Vizzy's ETH-based motion control stack uses three distinct board types: the **MC
 The MC4plus is a 4-axis Ethernet motion control board designed for light-duty joints. It directly drives brushed DC motors via PWM and reads quadrature encoders on-board. Because it has no absolute encoder interface, joints require a calibration phase at startup to find their zero reference. It is the right choice for Vizzy's head given that the eye and neck joints are low-inertia and position control alone is sufficient.
 
 <p align="center">
-  <img src="resources/MC4_Plus_Board_Schema.png" alt="MC4plus Board Schema" width="600"/>
+  <img src="resources/images/MC4_Plus_Board_Schema.png" alt="MC4plus Board Schema" width="600"/>
   <br><em>MC4plus board schema</em>
 </p>
 
@@ -729,7 +729,7 @@ The MC4plus is a 4-axis Ethernet motion control board designed for light-duty jo
 The EMS4 (Ethernet Motion Supervisor, 4 axes) is a more capable Ethernet board that acts as a CAN master. Rather than driving motors directly, it delegates low-level motor control to 2FOC boards connected on its CAN bus. It reads AEA (Absolute Encoder with Analog output) sensors directly at the joint level, providing true absolute position feedback without requiring homing. Torque control is achieved through the 2FOC boards' inner current loop. It is used for Vizzy's left arm shoulder, where heavier loads and higher precision demand both absolute position knowledge and torque regulation.
 
 <p align="center">
-  <img src="resources/EMS_Board_Schema.png" alt="EMS4 Board Schema" width="600"/>
+  <img src="resources/images/EMS_Board_Schema.png" alt="EMS4 Board Schema" width="600"/>
   <br><em>EMS4 board schema</em>
 </p>
 
@@ -738,7 +738,7 @@ The EMS4 (Ethernet Motion Supervisor, 4 axes) is a more capable Ethernet board t
 The 2FOC (2-axis Field-Oriented Control) board is a CAN-connected motor driver developed by IIT. It is not an Ethernet board and does not communicate with the PC104 directly, it receives setpoints from an EMS4 master over CAN and executes the inner FOC control loop locally at high frequency. Each 2FOC board drives two brushless DC motors and reads a ROIE (Rotor Incremental Encoder) to close the current/velocity loop. Multiple 2FOC boards are chained on the EMS4's CAN bus, up to two per joint.
 
 <p align="center">
-  <img src="resources/2FOC_Board_Schema.png" alt="2FOC Board Schema" width="600"/>
+  <img src="resources/images/2FOC_Board_Schema.png" alt="2FOC Board Schema" width="600"/>
   <br><em>2FOC board schema</em>
 </p>
 
