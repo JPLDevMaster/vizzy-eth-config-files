@@ -22,33 +22,45 @@
                 <group name="FIRMWARE">
                     <param name="major">            3           </param>    
                     <param name="minor">            3           </param> 
-                    <param name="build">            3           </param>
+                    <param name="build">            10           </param>
                 </group>
             </group>
             
             
 
             <group name="JOINTMAPPING">
-                <!-- TODO: Revise the number of joints/columns in this group. "CAN1:3:0" ? -->
+                <!-- 
+                    Format: CAN{can_network}:{can_address}:{0}
+
+                        - can_network:
+                        Which CAN bus of the EMS is used.
+                        For an EMS4, this can either be 1 or 2, because the EMS4 has 2 independent CAN buses (P4 -> CAN1 P5->CAN2).
+
+                        - can_address:
+                        The CAN board address / CAN node ID on that bus.
+                        It has to identify a specific CAN board on that bus.
+                        So values like 1, 2, 3, 4, ... can all make sense, depending on the robot wiring/configuration.
+                -->
                 <group name="ACTUATOR">                
-                    <param name="type">             eomc_act_foc        foc                 foc             </param>
-                    <param name="port">             CAN1:1:0            CAN1:2:0            CAN1:3:0        </param>
+                    <param name="type">             foc                 foc                 foc                 foc             </param>
+                    <param name="port">             CAN1:1:0            CAN1:2:0            CAN1:3:0            CAN1:4:0        </param>
                 </group>
                 
+                <!-- No encoder 1 slots are used. -->
                 <group name="ENCODER1">  
-                    <param name="type">             eomc_enc_aea        aea                 aea             </param>  
-                    <param name="port">             CONN:P6             CONN:P7             CONN:P8         </param>
-                    <param name="position">         eomc_pos_atjoint    atjoint             atjoint         </param> 
-                    <param name="resolution">       -4096               -4096               4096            </param>
-                    <param name="tolerance">        0.703                0.703              0.703           </param>  
+                    <param name="type">             none                none                none                none            </param>  
+                    <param name="port">             CONN:none           CONN:none           CONN:none           CONN:none       </param>
+                    <param name="position">         none                none                none                none            </param> 
+                    <param name="resolution">       0                   0                   0                   0               </param>
+                    <param name="tolerance">        0                   0                   0                   0               </param>  
                 </group>        
                 
                 <group name="ENCODER2">
-                    <param name="type">             roie                roie                roie            </param>
-                    <param name="port">             CAN1:1:0            CAN1:2:0            CAN1:3:0        </param>
-                    <param name="position">         atmotor             atmotor             atmotor         </param>
-                    <param name="resolution">       -14400              -14400              -14400          </param>
-                    <param name="tolerance">         0                   0                   0              </param>  
+                    <param name="type">             qenc                qenc               qenc               qenc              </param>
+                    <param name="port">             CAN1:1:0            CAN1:2:0           CAN1:3:0           CAN1:4:0          </param>
+                    <param name="position">         atmotor             atmotor            atmotor            atmotor           </param>
+                    <param name="resolution">       512                 512                512                512               </param>
+                    <param name="tolerance">        0                   0                  0                  0                 </param>  
                 </group> 
  
             </group>    
