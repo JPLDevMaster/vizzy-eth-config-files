@@ -40,6 +40,8 @@
                         The CAN board address / CAN node ID on that bus.
                         It has to identify a specific CAN board on that bus.
                         So values like 1, 2, 3, 4, ... can all make sense, depending on the robot wiring/configuration.
+
+                        Important GitHub issue: https://github.com/orgs/robotology/discussions/441
                 -->
                 <group name="ACTUATOR">                
                     <param name="type">             foc                 foc                 foc                 foc             </param>
