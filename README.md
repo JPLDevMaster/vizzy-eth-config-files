@@ -31,6 +31,7 @@ This repository contains the YARP `yarprobotinterface` configuration files for t
 - [YARP Concepts Explained](#yarp-concepts-explained)
 - [Eye Coupling Explained](#eye-coupling-explained)
 - [Board Types: MC4plus, EMS4, and 2FOC](#board-types-mc4plus-ems4-and-2foc)
+- [Resources](#resources)
 - [Documentation & Citation](#documentation--citation)
 - [Reporting Issues](#reporting-issues)
 
@@ -55,7 +56,8 @@ Vizzy's motion control relies on IIT-developed Ethernet motion control boards, e
 ```
 vizzy-eth-config-files/
 │
-├── vizzy_all.xml                             # Top-level robot configuration (entry point)
+├── vizzy_all.xml                             # Top-level robot configuration (entry point for full robot)
+├── vizzy_left_arm.xml                        # Left-arm-only entry point (EB06 only, no head)
 ├── general.xml                               # Global motion control parameters
 ├── yarprobotinterface.ini                    # yarprobotinterface module config
 ├── yarpmotorgui.ini                          # yarpmotorgui config
@@ -78,7 +80,7 @@ vizzy-eth-config-files/
 │       ├── head-eb05-j0_1-mc.xml             # Neck: PID gains, operating limits, control modes
 │       ├── head-eb05-j0_1-mc_service.xml     # Neck: actuator/encoder port mapping
 │       ├── left_arm-eb06-j0_2-mc.xml         # Arm: PID gains, operating limits, 2FOC PIDs
-│       └── left_arm-eb06-j0_2-mc_service.xml # Arm: CAN/AEA/ROIE port mapping
+│       └── left_arm-eb06-j0_2-mc_service.xml # Arm: CAN/qenc port mapping
 │
 ├── wrappers/
 │   └── motorControl/                         # YARP controlboardwrapper2 devices
@@ -89,11 +91,30 @@ vizzy-eth-config-files/
 │   ├── head-calib.xml                        # Head (5 joints) calibration
 │   └── left_arm-calib.xml                    # Left arm (3 joints) calibration
 │
-└── models/                                   # Mechanical CAD models (reference only)
-    ├── Lock_Piece_Model.dwg
-    ├── Lock_Piece_Model.stl
-    ├── Vizzy_Head_Boards_Holder_Model.stl
-    └── Drawing2.dwg
+├── models/                                   # Mechanical CAD models (reference only)
+│   ├── Lock_Piece_Model.dwg
+│   ├── Lock_Piece_Model.stl
+│   ├── Vizzy_Head_Board_Holder_Model.dwg
+│   ├── Vizzy_Head_Boards_Holder_Model.stl
+│   └── Drawing2.dwg
+│
+└── resources/                                # Reference materials (not loaded by yarprobotinterface)
+    ├── firmware/                             # ETH board firmware hex files
+    │   ├── ems_v1_23.hex                     # EMS4 board firmware (v1.23)
+    │   └── mc4plus_v1_23.hex                 # MC4plus board firmware (v1.23)
+    │
+    ├── images/                               # Board schema diagrams (used in this README)
+    │   ├── MC4_Plus_Board_Schema.png
+    │   ├── EMS_Board_Schema.png
+    │   └── 2FOC_Board_Schema.png
+    │
+    └── schematics/                           # Electrical wiring schematics
+        ├── Left_Shoulder.dwg                 # Original left shoulder schematic (AutoCAD)
+        ├── Left_Shoulder_v2.dwg              # Current left shoulder schematic (AutoCAD)
+        ├── Left_Shoulder_v2-Model.pdf        # Exported PDF of current schematic
+        ├── Current_Setup.pdf                 # Current overall wiring setup
+        ├── Old_Setup.pdf                     # Previous wiring setup (reference)
+        └── Old_Setup_2.pdf                   # Earlier wiring setup (reference)
 ```
 
 ### File Naming Convention
@@ -223,6 +244,16 @@ config ./vizzy_all.xml
 
 ---
 
+#### `vizzy_left_arm.xml` -- Left-Arm-Only Entry Point
+
+An alternative root configuration that includes only the left arm subsystem (EB06 + `left_arm-mc_wrapper` + `left_arm-calibrator`). Useful during development or debugging when the head boards are not needed or not available. Launch with:
+
+```bash
+yarprobotinterface --config vizzy_left_arm.xml
+```
+
+---
+
 ### General Parameters (`general.xml`)
 
 Included by every `embObjMotionControl` device. Sets system-wide motion control behaviour.
@@ -331,8 +362,8 @@ No coupling (identity J2M/M2J matrices).
 
 | Joint | Axis Name | Soft Min (°) | Soft Max (°) | Hard Min (°) | Hard Max (°) |
 |-------|-----------|-------------|-------------|-------------|-------------|
-| 0 | `left_shldr_scapula` | -18 | +18 | -95.5 | +8 |
-| 1 | `left_shldr_flection` | -75 | +135 | +15 | +160 |
+| 0 | `left_shldr_scapula` | -18 | +18 | -95.5 | +20 |
+| 1 | `left_shldr_flection` | -75 | +135 | -80 | +160 |
 | 2 | `left_shldr_abduction` | 0 | +70 | -32 | +80 |
 
 > Note: The hardware limits for the shoulder are asymmetric and reflect physical constraints of the scapula mechanism. The wide discrepancy between hardware and software limits on joints 0 and 1 indicates the arm has not yet been fully tuned -- software limits are more conservative until reliable operation is confirmed.
@@ -466,6 +497,7 @@ Each named PID group (e.g., `POS_PID_DEFAULT`) defines a complete controller con
 | `velocityThres` | Velocity threshold (deg/s) below which Coulomb friction compensation is applied |
 | `filterType` | Type of filter applied to the torque feedback signal |
 | `ktau` | Torque constant: converts motor current to joint torque (N·m/A). Values: scapula=180, flection=464, abduction=463. |
+| `kbemf` | Back-EMF compensation coefficient. Currently `0` for all joints (disabled). Added to satisfy a required-parameter check in the firmware; omitting it produces a runtime error even when torque control is not active. |
 
 **`2FOC_CUR_CONTROL`** -- Low-level current controller (runs on EMS4/FOC hardware):
 
@@ -507,23 +539,25 @@ These files tell the firmware which physical connectors and CAN addresses each j
 
 **Left arm board (`ems4`)** -- `SERVICE` type: `eomn_serv_MC_foc`
 
-| Joint | Actuator | ENCODER1 (AEA) Port | ENCODER2 (ROIE) Port | AEA Resolution |
-|-------|----------|--------------------|--------------------|---------------|
-| left_shldr_scapula | `foc` @ `CAN1:1:0` | `aea` @ `CONN:P6` | `roie` @ `CAN1:1:0` | -4096 |
-| left_shldr_flection | `foc` @ `CAN1:2:0` | `aea` @ `CONN:P7` | `roie` @ `CAN1:2:0` | -4096 |
-| left_shldr_abduction | `foc` @ `CAN1:3:0` | `aea` @ `CONN:P8` | `roie` @ `CAN1:3:0` | +4096 |
+| Slot | Actuator | ENCODER1 | ENCODER2 (qenc) Port | ENCODER2 Resolution |
+|------|----------|----------|----------------------|---------------------|
+| 0 — left_shldr_scapula | `foc` @ `CAN1:1:0` | `none` | `qenc` @ `CAN1:1:0` (atmotor) | 512 CPR |
+| 1 — left_shldr_flection | `foc` @ `CAN1:2:0` | `none` | `qenc` @ `CAN1:2:0` (atmotor) | 512 CPR |
+| 2 — left_shldr_abduction | `foc` @ `CAN1:3:0` | `none` | `qenc` @ `CAN1:3:0` (atmotor) | 512 CPR |
+| 3 — (reserved) | `foc` @ `CAN1:4:0` | `none` | `qenc` @ `CAN1:4:0` (atmotor) | 512 CPR |
 
 - **`foc`**: Field Oriented Control driver board, addressed over CAN bus. `CAN1:X:0` = CAN bus 1, node ID X, channel 0.
-- **`aea`** (Absolute Encoder with Analogue output): Absolute position encoder. Provides joint-level position without calibration. Resolution of ±4096 → 13-bit absolute. Negative sign indicates reversed counting direction for scapula and flection.
-- **`roie`** (Rotor Index Encoder): Incremental encoder on the motor rotor, used for FOC speed/commutation feedback. Resolution of -14400 counts/rev (negative = reversed direction).
-- **`tolerance`**: `0.703` degrees -- maximum acceptable discrepancy between ENCODER1 (AEA) and ENCODER2 (ROIE) readings. If the two encoders disagree by more than this, a fault is triggered.
+- **ENCODER1 `none`**: No joint-level absolute encoder is currently used.
+- **`qenc` @ `atmotor`**: Quadrature encoder mounted at the motor rotor, read through the FOC board over CAN. This mirrors the setup used on the MC4plus head boards.
+- **Slot 3 (reserved)**: A 4th actuator/encoder slot is pre-allocated in the service file (`CAN1:4:0`) to account for the Torso motors. The mec.xml currently defines only 3 active joints.
+- **No dual-encoder cross-check**: With ENCODER1 absent, the encoder cross-check tolerance is `0` for all slots and no fault can be triggered by encoder disagreement.
 
 **FOC CAN board firmware version:**
 
 | Parameter | Value |
 |-----------|-------|
 | Protocol major/minor | 1.6 |
-| Firmware major/minor/build | 3.3.3 |
+| Firmware major/minor/build | 3.3.10 |
 
 > The EMS4 checks that connected FOC boards report matching protocol and firmware versions at startup. Mismatched firmware will prevent the arm from initializing.
 
@@ -605,7 +639,7 @@ The process:
 
 | Parameter | Joint 0 (scapula) | Joint 1 (flection) | Joint 2 (abduction) |
 |-----------|------------------|-------------------|---------------------|
-| `calibration1` (search PWM) | 1000 | 1000 | -- |
+| `calibration1` (search PWM) | 1000 | 1000 | 1000 |
 | `calibrationDelta` (°) | -20.0 | 84.0 | -75.0 |
 | `startupPosition` (°) | 0 | 0 | 0 |
 | `startupVelocity` (°/s) | 10 | 10 | 10 |
@@ -614,6 +648,7 @@ The process:
 
 - **Home position**: All joints → 0°, at `homeVelocities`: 20 20 20 (deg/s)
 - **Calibration order**: `(0)` → `(1)` → `(2)` -- sequential
+- All 3 joints use hard-stop (type 5) calibration.
 
 ---
 
@@ -628,9 +663,9 @@ Complete joint reference table including all boards:
 | `/vizzy/head` | 2 | `eye_tilt` | -30 | +30 | DC | OPTICAL_QUAD | EB04 (MC4plus) |
 | `/vizzy/head` | 3 | `version` | -30 | +30 | DC | OPTICAL_QUAD | EB04 (MC4plus) |
 | `/vizzy/head` | 4 | `vergence` | 0 | +30 | DC | OPTICAL_QUAD | EB04 (MC4plus) |
-| `/vizzy/left_arm` | 0 | `left_shldr_scapula` | -18 | +18 | DC (FOC) | OPTICAL_QUAD + AEA | EB06 (EMS4) |
-| `/vizzy/left_arm` | 1 | `left_shldr_flection` | -75 | +135 | DC (FOC) | OPTICAL_QUAD + AEA | EB06 (EMS4) |
-| `/vizzy/left_arm` | 2 | `left_shldr_abduction` | 0 | +70 | DC (FOC) | OPTICAL_QUAD + AEA | EB06 (EMS4) |
+| `/vizzy/left_arm` | 0 | `left_shldr_scapula` | -18 | +18 | DC (FOC) | OPTICAL_QUAD (via CAN) | EB06 (EMS4) |
+| `/vizzy/left_arm` | 1 | `left_shldr_flection` | -75 | +135 | DC (FOC) | OPTICAL_QUAD (via CAN) | EB06 (EMS4) |
+| `/vizzy/left_arm` | 2 | `left_shldr_abduction` | 0 | +70 | DC (FOC) | OPTICAL_QUAD (via CAN) | EB06 (EMS4) |
 
 ---
 
@@ -708,9 +743,9 @@ Vizzy's ETH-based motion control stack uses three distinct board types: the **MC
 | Axes per board | Up to 4 | Up to 4 | 1 (dedicated per motor) |
 | Motor type supported | Brushed DC | Brushless DC (BLDC) | Brushless DC (BLDC) |
 | Actuator interface | Direct PWM | CAN bus (to 2FOC boards) | Direct drive (FOC phase currents) |
-| Primary encoder | Quadrature (on-board) | AEA (absolute, at joint) | ROIE (rotor incremental) |
-| Secondary encoder | None | ROIE (rotor incremental, via CAN) | None |
-| Joint-level absolute position | No (requires calibration) | Yes (AEA encoder) | Yes(?) |
+| Primary encoder | Quadrature (on-board) | AEA (not used) | ROIE (not used) |
+| Secondary encoder | None | None | None |
+| Joint-level absolute position | No | No | No |
 | Torque / current control | No | Yes (via 2FOC) | Yes (inner FOC current loop) |
 | Field-Oriented Control | No | Delegated to 2FOC | Yes (native) |
 | Suitable for | Head joints (light, low-inertia) | Arm joints (heavy, precision needed) | Individual arm motors |
@@ -726,7 +761,7 @@ The MC4plus is a 4-axis Ethernet motion control board designed for light-duty jo
 
 ### EMS4
 
-The EMS4 (Ethernet Motion Supervisor, 4 axes) is a more capable Ethernet board that acts as a CAN master. Rather than driving motors directly, it delegates low-level motor control to 2FOC boards connected on its CAN bus. It reads AEA (Absolute Encoder with Analog output) sensors directly at the joint level, providing true absolute position feedback without requiring homing. Torque control is achieved through the 2FOC boards' inner current loop. It is used for Vizzy's left arm shoulder, where heavier loads and higher precision demand both absolute position knowledge and torque regulation.
+The EMS4 (Ethernet Motion Supervisor, 4 axes) is a more capable Ethernet board that acts as a CAN master. Rather than driving motors directly, it delegates low-level motor control to 2FOC boards connected on its CAN bus. Torque control is achieved through the 2FOC boards' inner current loop. It is used for Vizzy's left arm shoulder, where heavier loads and higher precision demand FOC-level current regulation. In Vizzy's current configuration, the EMS4 reads quadrature encoders at the motor through the CAN bus (not joint-level AEA absolute encoders), so the shoulder joints require the same hard-stop calibration procedure as the head boards.
 
 <p align="center">
   <img src="resources/images/EMS_Board_Schema.png" alt="EMS4 Board Schema" width="600"/>
@@ -741,6 +776,46 @@ The 2FOC (2-axis Field-Oriented Control) board is a CAN-connected motor driver d
   <img src="resources/images/2FOC_Board_Schema.png" alt="2FOC Board Schema" width="600"/>
   <br><em>2FOC board schema</em>
 </p>
+
+---
+
+## Resources
+
+The `resources/` directory contains reference materials that are not loaded by `yarprobotinterface` but are useful for hardware maintenance, documentation, and development.
+
+### `resources/firmware/`
+
+Pre-built firmware hex files for flashing the ETH boards. These must be flashed using the IIT firmware update tools (e.g., `FirmwareUpdater`) and are not applied automatically at runtime.
+
+| File | Board | Version |
+|------|-------|---------|
+| `mc4plus_v1_23.hex` | MC4plus (EB04, EB05) | v1.23 |
+| `ems_v1_23.hex` | EMS4 (EB06) | v1.23 |
+
+> The firmware version must be compatible with the `MotioncontrolVersion` declared in the `*-mec.xml` files (currently `6`) and the protocol/firmware versions declared in `*-mc_service.xml`. Flashing mismatched firmware will prevent the board from initialising.
+
+### `resources/images/`
+
+Board schema diagrams embedded in this README (in the [Board Types](#board-types-mc4plus-ems4-and-2foc) section). Not required for robot operation.
+
+| File | Content |
+|------|---------|
+| `MC4_Plus_Board_Schema.png` | MC4plus connector and signal layout |
+| `EMS_Board_Schema.png` | EMS4 connector and signal layout |
+| `2FOC_Board_Schema.png` | 2FOC CAN board connector and signal layout |
+
+### `resources/schematics/`
+
+AutoCAD electrical wiring schematics for the robot's physical cabling. These document how the ETH boards, motors, and encoders are physically wired.
+
+| File | Content |
+|------|---------|
+| `Left_Shoulder_v2.dwg` | Current left shoulder schematic (AutoCAD source, actively maintained) |
+| `Left_Shoulder_v2-Model.pdf` | Exported PDF of the current left shoulder schematic |
+| `Left_Shoulder.dwg` | Original left shoulder schematic (superseded, kept for reference) |
+| `Current_Setup.pdf` | Current overall robot wiring setup |
+| `Old_Setup.pdf` | Previous wiring setup (reference) |
+| `Old_Setup_2.pdf` | Earlier wiring setup (reference) |
 
 ---
 

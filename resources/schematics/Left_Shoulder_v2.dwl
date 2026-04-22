@@ -1,3 +1,0 @@
-joaod
-ZENBOOK-JD 
-22 April 2026  13:31:36
