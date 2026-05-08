@@ -41,3 +41,5 @@ The 2FOC (2-axis Field-Oriented Control) board is a CAN-connected motor driver d
   <img src="../images/2FOC_Board_Schema.png" alt="2FOC Board Schema" width="600"/>
   <br><em>2FOC board schema</em>
 </p>
+
+> **Minimum supply voltage:** The 2FOC board requires at least **12.5 V** to operate correctly when no load is attached. Supplying less than this may cause the board to fail to initialise or behave erratically.
