@@ -97,7 +97,7 @@
             (viscousNeg 0.00300000000000000006245 0.000599999999999999947438 0.000699999999999999992888) (coulombPos 0 0 0) (coulombNeg 0 0 0) 
             (velocityThres 0 0 0) (filterType 0 0 0) (ktau 180 464 463)
          -->
-        <param name="kbemf">                0           0           0   </param>
+        <param name="kbemf">                0                           </param>
     </group>
     
     <group name="2FOC_CUR_CONTROL"> <!-- Imported from iCub Lisboa v2.14.0 -->

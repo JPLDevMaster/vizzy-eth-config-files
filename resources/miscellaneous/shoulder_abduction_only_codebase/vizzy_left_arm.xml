@@ -22,6 +22,7 @@
     <xi:include href="./wrappers/motorControl/left_arm-mc_wrapper.xml" />
 	
 	<!--  CALIBRATORS -->
+	<xi:include href="./calibrators/head-calib.xml" />
     <xi:include href="./calibrators/left_arm-calib.xml" />
 	</devices>
 
