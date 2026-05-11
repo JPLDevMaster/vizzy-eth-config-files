@@ -3,8 +3,8 @@
 
 <params xmlns:xi="http://www.w3.org/2001/XInclude" robot="vizzy" build="1">
     <group name="GENERAL">
-        <param name="MotioncontrolVersion"> 6                                                                   </param>
-        <param name="Joints">   1     
+        <param name="MotioncontrolVersion"> 6                      </param>
+        <param name="Joints">             1     
         <!-- joint number in sub-part     0                             -->
     	<!-- joint name                   Left Shldr Abduction          -->                                                                    </param> 
         <param name="AxisMap">            0                        </param>
@@ -15,17 +15,17 @@
         <param name="ampsToSensor">       1000.0                   </param>
         <param name="Gearbox_M2J">        1                        </param>
         <param name="Gearbox_E2J">   	  1                        </param>
-        <param name="JointEncoderType">   "OPTICAL_QUAD"		    </param>
+        <param name="JointEncoderType">   "OPTICAL_QUAD"		   </param>
         <param name="useMotorSpeedFbk">   1                        </param>
         <param name="MotorType">          "DC"                     </param>
-        <param name="Verbose">		  1                        </param>
+        <param name="Verbose">		      1                        </param>
     </group>
     
     <!-- TODO: Tune this parameters! -->
     <group name="LIMITS">
         <!--                                    0          -->
         <param name="hardwareJntPosMax">        80      </param>  
-        <param name="hardwareJntPosMin">        -32      </param>
+        <param name="hardwareJntPosMin">       -32      </param>
         <param name="rotorPosMin">              0       </param> 
         <param name="rotorPosMax">              0       </param>
     </group>
@@ -37,8 +37,8 @@
         <param name="HasRotorEncoderIndex">  0             </param>
         <param name="HasSpeedEncoder">       0             </param>
         <param name="RotorIndexOffset">      0             </param>
-        <param name="MotorPoles">            8             </param>
-        <param name="AutoCalibration">      1             </param>
+        <param name="MotorPoles">            2             </param>
+        <param name="AutoCalibration">       0             </param>
     </group>
 
 
@@ -73,9 +73,9 @@
     </group>   
 
     <group name="JOINTSET_CFG"> <!-- To be deleted?  -->
-        <param name= "numberofsets"> 1 </param>
+        <param name= "numberofsets">     1             </param>
         <group name="JOINTSET_0">
-            <param name="listofjoints">  0         </param>
+            <param name="listofjoints">  0             </param>
             <param name="constraint">    none          </param>
             <param name="param1">        0             </param>
             <param name="param2">        0             </param>
