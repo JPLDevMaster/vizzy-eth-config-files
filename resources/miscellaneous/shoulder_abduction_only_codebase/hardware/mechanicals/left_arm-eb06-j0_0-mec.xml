@@ -39,6 +39,7 @@
         <param name="RotorIndexOffset">      0          </param>
         <param name="MotorPoles">            2          </param>
         <param name="AutoCalibration">       0          </param>
+        <param name="Verbose">               1          </param>
     </group>
 
 
