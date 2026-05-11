@@ -33,7 +33,7 @@
     
     <!-- Added this group for warning suppression -->
     <group name="OTHER_CONTROL_PARAMETERS">
-        <param name="DeadZone">                 0.0                 	</param>
+        <param name="deadZone">                 0.0                 	</param>
     </group>
 
     <!-- TODO: Given we just use position control, check if the other controllers can be removed! -->
