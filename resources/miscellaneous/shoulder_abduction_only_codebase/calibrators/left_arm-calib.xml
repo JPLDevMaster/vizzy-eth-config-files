@@ -20,7 +20,7 @@
         <param name="calibration5"> 0 											</param>
         <param name="calibrationZero"> 0.0										</param>
         <!-- TODO: Tune these parameters -->
-        <!-- calibrationDelta retrieved from 'Zeros' of previous version         -->
+        <!-- calibrationDelta retrieved from 'Zeros' of previous version             -->
 		<param name="calibrationDelta"> -75.0		    						</param>
 		<param name="startupPosition"> 0.0 										</param>
 		<param name="startupVelocity"> 10.0 		    						</param>

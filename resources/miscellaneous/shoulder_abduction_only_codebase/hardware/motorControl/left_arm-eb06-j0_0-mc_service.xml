@@ -22,7 +22,7 @@
                 <group name="FIRMWARE">
                     <param name="major">            3           </param>    
                     <param name="minor">            3           </param> 
-                    <param name="build">            10           </param>
+                    <param name="build">            10          </param>
                 </group>
             </group>
             
@@ -44,8 +44,8 @@
                         Important GitHub issue: https://github.com/orgs/robotology/discussions/441
                 -->
                 <group name="ACTUATOR">                
-                    <param name="type">             foc                 </param>
-                    <param name="port">             CAN2:1:0            </param>
+                    <param name="type">             foc                </param>
+                    <param name="port">             CAN2:1:0           </param>
                 </group>
                 
                 <group name="ENCODER1">
