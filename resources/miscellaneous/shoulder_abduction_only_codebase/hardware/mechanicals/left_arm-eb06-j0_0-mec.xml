@@ -63,7 +63,7 @@
        
         <!-- Check iCub code  -->
         <!-- E2J is the bridge between raw encoder data and the joints position. -->
-        <!-- It should be identity. -->
+        <!-- It should be identity. -->  
         <param name ="matrixE2J">  
             1.000   0.000   0.000   0.000   0.000   0.000
             0.000   1.000   0.000   0.000   0.000   0.000
@@ -82,5 +82,5 @@
             <param name="param2">        0             </param>
         </group> 
     </group>                                       
-    
+
 </params>
