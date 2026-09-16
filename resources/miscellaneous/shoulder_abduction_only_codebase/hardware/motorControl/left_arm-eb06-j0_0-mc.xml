@@ -59,8 +59,8 @@
         <param name="kp">                       +750        		</param>
         <param name="kd">                       +2          		</param>
         <param name="ki">                       +3          		</param>
-        <param name="maxOutput">                1333        		</param>
-        <param name="maxInt">                   1000        		</param>
+        <param name="maxOutput">                3000        		</param>
+        <param name="maxInt">                   2000        		</param>
         <param name="stictionUp">               0           		</param>
         <param name="stictionDown">             0          		    </param>
         <param name="kff">                      0         		    </param>

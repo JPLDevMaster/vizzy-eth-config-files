@@ -11,7 +11,7 @@
         <param name="AxisName">             "left_shldr_abduction"   </param>
         <param name="AxisType">             "revolute"               </param>
         <param name="Encoder">              73255.5                  </param>
-        <param name="fullscalePWM">         1333                     </param>
+        <param name="fullscalePWM">         2000                     </param>
         <param name="ampsToSensor">         1000.0                   </param>
         <param name="Gearbox_M2J">          1                        </param>
         <param name="Gearbox_E2J">   	    1                        </param>
