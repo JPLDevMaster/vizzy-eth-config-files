@@ -10,24 +10,24 @@
         <param name="AxisMap">              0                        </param>
         <param name="AxisName">             "left_shldr_abduction"   </param>
         <param name="AxisType">             "revolute"               </param>
-        <param name="Encoder">              73255.5                  </param>
-        <param name="fullscalePWM">         2000                     </param>
+        <param name="Encoder">              1746.62                   </param>
+        <param name="fullscalePWM">         3000                     </param>
         <param name="ampsToSensor">         1000.0                   </param>
         <param name="Gearbox_M2J">          1                        </param>
         <param name="Gearbox_E2J">   	    1                        </param>
-        <param name="JointEncoderType">     "OPTICAL_QUAD"		     </param>
+        <param name="JointEncoderType">     "OPTICAL_QUAD"           </param>
         <param name="useMotorSpeedFbk">     1                        </param>
         <param name="MotorType">            "DC"                     </param>
-        <param name="Verbose">		        1                        </param>
+        <param name="Verbose">		    1                        </param>
     </group>
     
     <!-- TODO: Tune this parameters! -->
     <group name="LIMITS">
         <!--                                    0            -->
-        <param name="hardwareJntPosMax">        80      </param>  
-        <param name="hardwareJntPosMin">       -32      </param>
-        <param name="rotorPosMin">              0       </param> 
-        <param name="rotorPosMax">              0       </param>
+        <param name="hardwareJntPosMax">        99999999        </param>  
+        <param name="hardwareJntPosMin">        -99999999       </param>
+        <param name="rotorPosMin">              0        </param> 
+        <param name="rotorPosMax">              0        </param>
     </group>
 
     <group name="2FOC">
